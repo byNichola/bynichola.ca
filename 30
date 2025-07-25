@@ -61,7 +61,7 @@
     </div>
 
     <script>
-        const GUESS_COOLDOWN_SECONDS = 2;
+        const GUESS_COOLDOWN_SECONDS = 60;
         // Define the acronyms and their meanings, now supporting multiple correct guesses
         // The meanings are base64 encoded to prevent easy inspection.
         const acronyms = {
