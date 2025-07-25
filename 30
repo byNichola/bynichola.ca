@@ -65,7 +65,7 @@
     <script>
         // Define the acronyms and their meanings, now supporting multiple correct guesses
         // The meanings are base64 encoded to prevent easy inspection.
-        const encodedAcronyms = {
+        const acronyms = {
             "ffw": ['ZmxpZXMgZm9yIHdvcms=', 'Zmxvd24gZm9yIHdvcms=', 'ZmxldyBmb3Igd29yaw==', 'Zmx5IGZvciB3b3Jr'],
             "wty": ['d2VkZGluZyB0aGlzIHllYXI=', 'd2VkIHRoaXMgeWVhcg==', 'd2VkZGVkIHRoaXMgeWVhcg=='],
             "lit": ['bGl2ZWQgaW4gdG9yb250bw==', 'bGl2ZXMgaW4gdG9yb250bw==', 'bGl2aW5nIGluIHRvcm9udG8='],
