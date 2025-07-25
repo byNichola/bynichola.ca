@@ -1,45 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-	<title>Nic & Nim's 30th</title>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-
-	<!-- favicon.png -->
-	<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-	<link rel="icon" href="favicon.ico" type="image/x-icon">
-
- <!-- Google Fonts -->
- <link rel="preconnect" href="https://fonts.googleapis.com">
- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
- <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
-
-	<style>
-		* {
-			box-sizing: border-box;
-		}
-
-		body {
-      font-family: "Inter", sans-serif;
-      font-optical-sizing: auto;
-      font-style: normal;
-			font-size: 20px;
-			line-height: 1.5em;
-			color: rgba(0, 0, 0, 0.8);
-			background-color: rgba(233, 232, 228, 1);
-		}
-	</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acronym Guesser</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font for better aesthetics */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+    </style>
 </head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
-<body>
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        <!-- Removed the h1 tag as requested -->
 
-	<main>
+        <!-- Acronym Input Field -->
+        <div class="mb-4">
+            <label for="acronymInput" class="block text-gray-700 text-sm font-semibold mb-2">Acronym:</label>
+            <input type="text" id="acronymInput" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="e.g., TB">
+        </div>
 
-		<p>This is a test.</p>
+        <!-- Guess Input Field -->
+        <div class="mb-6">
+            <label for="guessInput" class="block text-gray-700 text-sm font-semibold mb-2">Guess <span class="text-gray-500">(What does it stand for?)</span>:</label>
+            <input type="text" id="guessInput" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="e.g., toured brazil">
+        </div>
 
-	</main>
+        <!-- Guess Button -->
+        <button id="guessButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition duration-300 ease-in-out transform hover:scale-105 shadow-md">
+            Guess
+        </button>
 
+        <!-- Feedback and Timer Messages -->
+        <div id="messageBox" class="mt-6 p-4 rounded-lg text-center text-lg font-medium hidden">
+            <!-- Messages will be displayed here -->
+        </div>
+
+        <!-- Instructions -->
+        <div class="mt-8 pt-4 border-t border-gray-200 text-sm text-gray-600">
+            <p class="mb-2">
+                If less than 80% of all cards in the room are deciphered, <strong>everyone sings karaoke</strong>.
+            </p>
+            <p>
+                If at least 80% are deciphered, <strong>only those with undeciphered cards sing</strong>.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Define the acronyms and their meanings, now supporting multiple correct guesses
+        // The meanings are base64 encoded to prevent easy inspection.
+        const acronyms = {
+            "ffw": ["ZmxpZXMgZm9yIHdvcms=", "Zmxvd24gZm9yIHdvcms=", "ZmxldyBmb3Igd29yaw==", "Zmx5IGZvciB3b3Jr", "Zmx5aW5nIGZvciB3b3Jr"],
+            "wty": ["d2VkZGluZyB0aGlzIHllYXI=", "d2VkIHRoaXMgeWVhcg==", "d2VkZGVkIHRoaXMgeWVhcg==", "Z2V0dGluZyBtYXJyaWVkIHRoaXMgeWVhcg==", "Z2V0dGluZyB3ZWQgdGhpcyB5ZWFy"],
+            "lit": ["bGl2ZWQgaW4gdG9yb250bw==", "bGl2ZXMgaW4gdG9yb250bw==", "bGl2aW5nIGluIHRvcm9udG8=", "bGl2ZSBpbiB0b3JvbnRv"],
+            "lib": ["bGl2ZXMgaW4gYnJhbXB0b24=", "bGl2ZWQgaW4gYnJhbXB0b24=", "bGl2aW5nIGluIGJyYW1wdG9u", "bGl2ZSBpbiBicmFtcHRvbg=="],
+            "f": ["Zm9vZGll", "Zm9vZGllcw==", "aXMgYSBmb29kaWU=", "bG92ZXMgZm9vZA=="],
+            "btf": ["YmVlbiB0byBmcmFuY2U=", "dmlzaXRlZCBmcmFuY2U=", "dHJhdmVsbGVkIHRvIGZyYW5jZQ==", "YmVlbiBpbiBmcmFuY2U="],
+            "auw": ["YXR0ZW5kZWQgdW5pdmVyc2l0eSBvZiB3YXRlcmxvb2==", "YXR0ZW5kIHVuaXZlcnNpdHkgb2Ygd2F0ZXJsb28=", "d2VudCB0byB1bml2ZXJzaXR5IG9mIHdhdGVybG9v", "c3R1ZGllZCBhdCB1bml2ZXJzaXR5IG9mIHdhdGVybG9v"],
+            "bhty": ["Ym91Z2h0IGEgaG91c2UgdGhpcyB5ZWFy", "Ym91Z2h0IGhvdXNlIHRoaXMgeWVhcg==", "YnV5IGhvdXNlIHRoaXMgeWVhcg==", "YnV5IGEgaG91c2UgdGhpcyB5ZWFy", "YnV5aW5nIGhvdXNlIHRoaXMgeWVhcg==", "cHVyY2hhc2VkIGEgaG91c2UgdGhpcyB5ZWFy", "Z290IGEgaG91c2UgdGhpcyB5ZWFy"],
+            "wb": ["d2F0Y2hlcyBiYXNlYmFsbA==", "d2F0Y2ggYmFzZWJhbGw=", "aXMgaW50byBiYXNlYmFsbA==", "YmFzZWJhbGwgZmFu", "bG92ZXMgYmFzZWJhbGw="],
+            "p": ["cGhvdG9ncmFwaGVy", "cGhvdG9ncmFwaHk=", "aW50byBwaG90b2dyYXBoeQ==", "bG92ZXMgcGhvdG9ncmFwaHk=", "aXMgYSBwaG90b2dyYXBoZXI="],
+            "loc": ["bGl2ZWQgb3V0c2lkZSBjYW5hZGE=", "aGFzIGxpdmVkIG91dHNpZGUgY2FuYWRh", "bGl2aW5nIG91dHNpZGUgY2FuYWRh", "bGl2ZXMgb3V0c2lkZSBjYW5hZGE="],
+            "btk": ["YmVlbiB0byBrb3JlYQ==", "dmlzaXRlZCBrb3JlYQ==", "dHJhdmVsbGVkIHRvIGtvcmVh", "YmVlbiBpbiBrb3JlYQ=="],
+            "gp": ["Z3Jvd3MgcGxhbnRz", "Z3Jvd2luZyBwbGFudHM=", "cGxhbnQgZ3Jvd2Vy", "aGFzIHBsYW50cw==", "aXMgYSBwbGFudCBncm93ZXI="],
+            "bte": ["YmVlbiB0byBlbmdsYW5k", "dmlzaXRlZCBlbmdsYW5k", "dHJhdmVsbGVkIHRvIGVuZ2xhbmQ=", "YmVlbiBpbiBlbmdsYW5k"],
+            "d": ["ZGFuY2Vz", "ZGFuY2Vy", "aXMgYSBkYW5jZXI=", "bG92ZXMgZGFuY2luZw=="],
+            "wa": ["d2F0Y2hlcyBhbmltZQ==", "d2F0Y2hpbmcgYW5pbWU=", "d2F0Y2ggYW5pbWU=", "YW5pbWUgZmFu", "aW50byBhbmltZQ==", "bG92ZXMgYW5pbWU="],
+            "wgr": ["d3JpdHRlbiBnb29nbGUgcmV2aWV3cw==", "d3JpdGVzIGdvb2dsZSByZXZpZXdz", "d3JvdGUgZ29vZ2xlIHJldmlld3M=", "aGFzIHdyaXR0ZW4gZ29vZ2xlIHJldmlld3M=", "aXMgYSBnb29nbGUgcmV2aWV3ZXI="],
+            "wgs": ["d2VhcnMgZ3ltIHNoYXJr", "d2VhciBneW0gc2hhcms=", "d29ybiBneW0gc2hhcms=", "d2VhcnMgZ3ltc2hhcms=", "d2VhcmFuZyBneW0gc2hhcms=", "aGFzIGd5bSBzaGFyayBjbG90aGVz"],
+            "waom": ["d2l0aCBhbiBvbGRlciBtYW4=", "d2l0aCBvbGRlciBtYW4=", "ZGF0aW5nIGFuIG9sZGVyIG1hbg==", "aXMgd2l0aCBhbiBvbGRlciBtYW4=", "cGFydG5lcmVkIHdpdGggYW4gb2xkZXIgbWFu"],
+            "btv": ["YmVlbiB0byB2ZWxk", "dmlzaXRlZCB2ZWxk", "YXR0ZW5kZWQgdmVsZA==", "d2VudCB0byB2ZWxk"],
+            "btj": ["YmVlbiB0byBqYXBhbg==", "dmlzaXRlZCBqYXBhbg==", "dHJhdmVsbGVkIHRvIGphcGFu", "YmVlbiBpbiBqYXBhbg=="],
+            "vi": ["dmlzaXRlZCBpdGFseQ==", "dmlzaXQgaXRhbHk=", "YmVlbiB0byBpdGFseQ==", "dHJhdmVsbGVkIHRvIGl0YWx5"],
+            "wopp": ["d29ya3Mgb24gcG9wdWxhciBwcm9kdWN0", "d29ya2luZyBvbiBwb3B1bGFyIHByb2R1Y3Q=", "d29ya2VkIG9uIHBvcHVsYXIgcHJvZHVjdA==", "ZGV2ZWxvcHMgcG9wdWxhciBwcm9kdWN0", "aXMgd29ya2luZyBvbiBhIHBvcHVsYXIgcHJvZHVjdA=="],
+            "ab": ["YXVndXN0IGJhYnk=", "Ym9ybiBpbiBhdWd1c3Q=", "aXMgYW4gYXVndXN0IGJhYnk="],
+            "db": ["ZGVjZW1iZXIgYmFieQ==", "Ym9ybiBpbiBkZWNlbWJlcg==", "aXMgYSBkZWNlbWJlciBiYWJ5"],
+            "bw": ["Ym9va3dvcm0=", "Ym9va3dvcm0=", "aXMgYSBib29rd29ybQ==", "bG92ZXMgYm9va3M=", "cmVhZHMgYSBsb3Q="],
+            "vcr": ["dmlzaXRlZCBjemVjaCByZXB1YmxpYw==", "dmlzaXRlZCBjemVjaGlh", "YmVlbiB0byBjemVjaCByZXB1YmxpYw==", "dHJhdmVsbGVkIHRvIGN6ZWNoIHJlcHVibGlj", "YmVlbiB0byBjemVjaGlh"]
+        };
+
+        // Get references to DOM elements
+        const acronymInput = document.getElementById('acronymInput');
+        const guessInput = document.getElementById('guessInput');
+        const guessButton = document.getElementById('guessButton');
+        const messageBox = document.getElementById('messageBox');
+
+        // State variables for cooldown
+        let isCooldownActive = false;
+        let cooldownTimer = null; // To store the setInterval ID
+        let remainingCooldownTime = 0;
+        let lastResultMessageType = ''; // Stores 'success' or 'error' for the result
+        let lastResultMessageText = ''; // Stores "Correct! Well done!" or "Incorrect..."
+
+        /**
+         * Displays a message in the message box.
+         * @param {string} message - The message to display.
+         * @param {string} type - The type of message ('success', 'error', 'info').
+         * @param {boolean} isResult - True if this message is the final guess result.
+         */
+        function showMessage(message, type, isResult = false) {
+            // If it's a result message, store it for later use during cooldown
+            if (isResult) {
+                lastResultMessageText = message;
+                lastResultMessageType = type;
+            }
+
+            messageBox.innerHTML = message; // Use innerHTML to support line breaks
+            messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-blue-100', 'text-blue-800');
+
+            if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-800');
+            } else if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-800');
+            } else if (type === 'info') {
+                messageBox.classList.add('bg-blue-100', 'text-blue-800');
+            }
+            messageBox.style.display = 'block'; // Ensure it's visible
+        }
+
+        /**
+         * Hides the message box.
+         */
+        function hideMessage() {
+            messageBox.classList.add('hidden');
+            messageBox.style.display = 'none'; // Ensure it's hidden
+        }
+
+        /**
+         * Starts the 20-second cooldown timer.
+         */
+        function startCooldown() {
+            isCooldownActive = true;
+            guessButton.disabled = true; // Disable button
+            guessButton.style.display = 'none'; // Hide the button during cooldown
+
+            remainingCooldownTime = 20; // Cooldown reduced to 20 seconds
+
+            // Display the initial result message along with the cooldown timer
+            showMessage(`${lastResultMessageText}<br>Please wait ${remainingCooldownTime} seconds before guessing again.`, lastResultMessageType);
+
+            // Clear any existing cooldown timer to prevent multiple intervals
+            if (cooldownTimer) {
+                clearInterval(cooldownTimer);
+            }
+
+            cooldownTimer = setInterval(() => {
+                remainingCooldownTime--;
+                if (remainingCooldownTime > 0) {
+                    // Update message with remaining time, preserving the result message and its type
+                    showMessage(`${lastResultMessageText}<br>Please wait ${remainingCooldownTime} seconds before guessing again.`, lastResultMessageType);
+                } else {
+                    clearInterval(cooldownTimer);
+                    isCooldownActive = false;
+                    guessButton.disabled = false; // Re-enable button
+                    guessButton.textContent = "Guess"; // Reset button text
+                    guessButton.style.display = 'block'; // Show button again
+                    hideMessage(); // Hide cooldown message
+                    lastResultMessageText = ''; // Clear stored result message
+                    lastResultMessageType = ''; // Clear stored result message type
+                }
+            }, 1000); // Update every second
+        }
+
+        /**
+         * Handles the guess button click event.
+         */
+        guessButton.addEventListener('click', () => {
+            if (isCooldownActive) {
+                // If cooldown is active, prevent guessing and update message with current cooldown status
+                showMessage(`${lastResultMessageText}<br>Please wait ${remainingCooldownTime} seconds before guessing again.`, lastResultMessageType);
+                return;
+            }
+
+            const acronym = acronymInput.value.trim().toLowerCase();
+            const guess = guessInput.value.trim().toLowerCase();
+
+            if (!acronym || !guess) {
+                showMessage("Please enter both an acronym and your guess.", 'error');
+                return;
+            }
+
+            // Disable button and show processing message during the fake delay
+            guessButton.disabled = true;
+            guessButton.textContent = "Processing...";
+            showMessage("Processing your guess...", 'info');
+
+            // Simulate a 3-second delay
+            setTimeout(() => {
+                let isCorrect = false;
+                let firstMatchDecoded = '';
+
+                // Check if the acronym exists and if the guess is one of the accepted meanings
+                if (acronyms[acronym]) {
+                    // Decode each stored meaning for comparison
+                    const decodedMeanings = acronyms[acronym].map(encodedMeaning => atob(encodedMeaning));
+                    const foundMatch = decodedMeanings.find(meaning => meaning === guess);
+
+                    if (foundMatch) {
+                        isCorrect = true;
+                        firstMatchDecoded = atob(acronyms[acronym][0]); // Get the first official meaning (decoded)
+                    }
+                }
+
+                if (isCorrect) {
+                    const formattedAcronym = acronym.toUpperCase();
+                    const formattedMeaning = firstMatchDecoded.toUpperCase();
+                    const successMessage = `Correct!<br>${formattedAcronym} stands for "${formattedMeaning}".<br>Bring your card to Nim or Nic.`;
+                    showMessage(successMessage, 'success', true); // Pass true to mark as result message
+                } else {
+                    showMessage("Incorrect.", 'error', true); // Pass true to mark as result message
+                }
+
+                // Start the 20-second cooldown after the guess is processed
+                startCooldown();
+
+            }, 3000); // 3-second fake delay
+        });
+
+        // Initialize: Hide the message box on page load
+        hideMessage();
+    </script>
 </body>
-
 </html>
