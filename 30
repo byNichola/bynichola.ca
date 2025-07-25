@@ -27,8 +27,6 @@
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
 
     <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
-        <!-- Removed the h1 tag as requested -->
-
         <!-- Acronym Input Field -->
         <div class="mb-4">
             <label for="acronymInput" class="block text-gray-700 text-sm font-semibold mb-2">Acronym:</label>
@@ -102,27 +100,37 @@
         const guessButton = document.getElementById('guessButton');
         const messageBox = document.getElementById('messageBox');
 
-        // State variables for cooldown
-        let isCooldownActive = false;
+        // Storage keys
+        const COOLDOWN_STORAGE_KEY = 'acronymGuesserCooldownEnd';
+        const LAST_MESSAGE_STORAGE_KEY = 'acronymGuesserLastMessage'; // To persist the result message
+
         let cooldownTimer = null; // To store the setInterval ID
-        let remainingCooldownTime = 0;
-        let lastResultMessageType = ''; // Stores 'success' or 'error' for the result
-        let lastResultMessageText = ''; // Stores "Correct! Well done!" or "Incorrect..."
+
+        /**
+         * Stores the last message and type in localStorage.
+         * @param {string} message - The message to display.
+         * @param {string} type - The type of message ('success', 'error').
+         */
+        function storeLastMessage(message, type) {
+            localStorage.setItem(LAST_MESSAGE_STORAGE_KEY, JSON.stringify({ message, type }));
+        }
+
+        /**
+         * Retrieves the last message and type from localStorage.
+         * @returns {{message: string, type: string}|null}
+         */
+        function retrieveLastMessage() {
+            const stored = localStorage.getItem(LAST_MESSAGE_STORAGE_KEY);
+            return stored ? JSON.parse(stored) : null;
+        }
 
         /**
          * Displays a message in the message box.
          * @param {string} message - The message to display.
          * @param {string} type - The type of message ('success', 'error', 'info').
-         * @param {boolean} isResult - True if this message is the final guess result.
          */
-        function showMessage(message, type, isResult = false) {
-            // If it's a result message, store it for later use during cooldown
-            if (isResult) {
-                lastResultMessageText = message;
-                lastResultMessageType = type;
-            }
-
-            messageBox.innerHTML = message; // Use innerHTML to support line breaks
+        function showMessage(message, type) {
+            messageBox.innerHTML = message;
             messageBox.classList.remove('hidden', 'bg-green-100', 'text-green-800', 'bg-red-100', 'text-red-800', 'bg-blue-100', 'text-blue-800');
 
             if (type === 'success') {
@@ -132,61 +140,79 @@
             } else if (type === 'info') {
                 messageBox.classList.add('bg-blue-100', 'text-blue-800');
             }
-            messageBox.style.display = 'block'; // Ensure it's visible
+            messageBox.style.display = 'block';
         }
 
         /**
-         * Hides the message box.
+         * Hides the message box and clears last message from storage.
          */
-        function hideMessage() {
+        function hideMessageAndClearStorage() {
             messageBox.classList.add('hidden');
-            messageBox.style.display = 'none'; // Ensure it's hidden
+            messageBox.style.display = 'none';
+            localStorage.removeItem(LAST_MESSAGE_STORAGE_KEY);
         }
 
         /**
-         * Starts the cooldown timer.
+         * Applies the cooldown state based on localStorage.
+         * This function is called on page load, after a guess, and on storage events.
          */
-        function startCooldown() {
-            isCooldownActive = true;
-            guessButton.disabled = true; // Disable button
-            guessButton.style.display = 'none'; // Hide the button during cooldown
+        function applyCooldownState() {
+            const storedCooldownEnd = localStorage.getItem(COOLDOWN_STORAGE_KEY);
+            const currentTime = Date.now();
 
-            remainingCooldownTime = GUESS_COOLDOWN_SECONDS;
-
-            // Display the initial result message along with the cooldown timer
-            showMessage(`${lastResultMessageText}<br>Please wait ${remainingCooldownTime} seconds before guessing again.`, lastResultMessageType);
-
-            // Clear any existing cooldown timer to prevent multiple intervals
+            // Clear any existing timer to prevent duplicates
             if (cooldownTimer) {
                 clearInterval(cooldownTimer);
             }
 
-            cooldownTimer = setInterval(() => {
-                remainingCooldownTime--;
-                if (remainingCooldownTime > 0) {
-                    // Update message with remaining time, preserving the result message and its type
-                    showMessage(`${lastResultMessageText}<br>Please wait ${remainingCooldownTime} seconds before guessing again.`, lastResultMessageType);
-                } else {
-                    clearInterval(cooldownTimer);
-                    isCooldownActive = false;
-                    guessButton.disabled = false; // Re-enable button
-                    guessButton.textContent = "Guess"; // Reset button text
-                    guessButton.style.display = 'block'; // Show button again
-                    hideMessage(); // Hide cooldown message
-                    lastResultMessageText = ''; // Clear stored result message
-                    lastResultMessageType = ''; // Clear stored result message type
-                }
-            }, 1000); // Update every second
+            if (storedCooldownEnd && parseInt(storedCooldownEnd, 10) > currentTime) {
+                // Cooldown is active
+                const cooldownEndTime = parseInt(storedCooldownEnd, 10);
+                let remainingTime = Math.ceil((cooldownEndTime - currentTime) / 1000);
+
+                guessButton.disabled = true;
+                guessButton.style.display = 'none'; // Hide the button during cooldown
+
+                const lastMessage = retrieveLastMessage();
+                // Use the stored message if available, otherwise a generic "Please wait."
+                const baseMessage = lastMessage ? lastMessage.message : "Please wait.";
+                const messageType = lastMessage ? lastMessage.type : 'info'; // Default to info if no last message type
+
+                showMessage(`${baseMessage}<br>Please wait ${remainingTime} seconds before guessing again.`, messageType);
+
+                cooldownTimer = setInterval(() => {
+                    remainingTime--;
+                    if (remainingTime > 0) {
+                        showMessage(`${baseMessage}<br>Please wait ${remainingTime} seconds before guessing again.`, messageType);
+                    } else {
+                        // Cooldown finished
+                        clearInterval(cooldownTimer);
+                        localStorage.removeItem(COOLDOWN_STORAGE_KEY); // Remove cooldown timestamp
+                        guessButton.disabled = false; // Re-enable button
+                        guessButton.textContent = "Guess"; // Reset button text
+                        guessButton.style.display = 'block'; // Show button again
+                        hideMessageAndClearStorage(); // Hide cooldown message and clear stored result
+                    }
+                }, 1000); // Update every second
+            } else {
+                // Cooldown is not active or has expired
+                localStorage.removeItem(COOLDOWN_STORAGE_KEY); // Clean up expired key if it exists
+                guessButton.disabled = false; // Ensure button is enabled
+                guessButton.textContent = "Guess"; // Reset button text
+                guessButton.style.display = 'block'; // Ensure button is visible
+                hideMessageAndClearStorage(); // Hide any lingering message and clear stored result
+            }
         }
 
         /**
          * Handles the guess button click event.
          */
         guessButton.addEventListener('click', () => {
-            if (isCooldownActive) {
-                // If cooldown is active, prevent guessing and update message with current cooldown status
-                showMessage(`${lastResultMessageText}<br>Please wait ${remainingCooldownTime} seconds before guessing again.`, lastResultMessageType);
-                return;
+            const storedCooldownEnd = localStorage.getItem(COOLDOWN_STORAGE_KEY);
+            // Check if cooldown is active from localStorage before processing a new guess
+            if (storedCooldownEnd && parseInt(storedCooldownEnd, 10) > Date.now()) {
+                applyCooldownState(); // Re-apply state to ensure current tab reflects cooldown
+                return; // Prevent new guess if cooldown is active
             }
 
             const acronym = acronymInput.value.trim().toLowerCase();
@@ -202,7 +228,7 @@
             guessButton.textContent = "Processing...";
             showMessage("Processing your guess...", 'info');
 
-            // Simulate a 3-second delay
+            // Simulate a 3-second delay for processing the guess
             setTimeout(() => {
                 let isCorrect = false;
                 let firstMatchDecoded = '';
@@ -219,23 +245,44 @@
                     }
                 }
 
+                let messageToStore = "";
+                let messageTypeToStore = "";
+
                 if (isCorrect) {
                     const formattedAcronym = acronym.toUpperCase();
                     const formattedMeaning = firstMatchDecoded.toUpperCase();
-                    const successMessage = `Correct!<br>${formattedAcronym} stands for "${formattedMeaning}".<br>Bring your card to Nim or Nic.`;
-                    showMessage(successMessage, 'success', true); // Pass true to mark as result message
+                    messageToStore = `Correct!<br>${formattedAcronym} stands for "${formattedMeaning}".<br>Bring your card to Nim or Nic.`;
+                    messageTypeToStore = 'success';
                 } else {
-                    showMessage("Incorrect.", 'error', true); // Pass true to mark as result message
+                    messageToStore = "Incorrect.";
+                    messageTypeToStore = 'error';
                 }
 
-                // Start the cooldown after the guess is processed
-                startCooldown();
+                // Store the result message and its type in localStorage before starting cooldown
+                storeLastMessage(messageToStore, messageTypeToStore);
+
+                // Calculate and set cooldown end time in localStorage
+                const cooldownEndTime = Date.now() + (GUESS_COOLDOWN_SECONDS * 1000);
+                localStorage.setItem(COOLDOWN_STORAGE_KEY, cooldownEndTime.toString());
+
+                // Apply the cooldown state, which will also display the message and start the timer
+                applyCooldownState();
 
             }, 3000); // 3-second fake delay
         });
 
-        // Initialize: Hide the message box on page load
-        hideMessage();
+        // Initialize on page load: check for active cooldown and apply state
+        window.addEventListener('load', () => {
+            applyCooldownState();
+        });
+
+        // Listen for storage changes from other tabs/windows
+        window.addEventListener('storage', (event) => {
+            // If the cooldown key or last message key changes, re-evaluate the cooldown state
+            if (event.key === COOLDOWN_STORAGE_KEY || event.key === LAST_MESSAGE_STORAGE_KEY) {
+                applyCooldownState();
+            }
+        });
     </script>
 </body>
 </html>
