@@ -29,13 +29,13 @@
     <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <!-- Acronym Input Field -->
         <div class="mb-4">
-            <label for="acronymInput" class="block text-gray-700 text-sm font-semibold mb-2">Acronym:</label>
+            <label for="acronymInput" class="block text-gray-700 font-semibold mb-2">Acronym on your card</label>
             <input type="text" id="acronymInput" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="e.g., TB">
         </div>
 
         <!-- Guess Input Field -->
         <div class="mb-6">
-            <label for="guessInput" class="block text-gray-700 text-sm font-semibold mb-2">Guess <span class="text-gray-500">(What does it stand for?)</span>:</label>
+            <label for="guessInput" class="block text-gray-700 font-semibold mb-2">Guess <span class="text-gray-500">(What does it stand for?)</span></label>
             <input type="text" id="guessInput" class="shadow-sm appearance-none border rounded-lg w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200 ease-in-out" placeholder="e.g., toured brazil">
         </div>
 
@@ -50,7 +50,7 @@
         </div>
 
         <!-- Instructions -->
-        <div class="mt-8 pt-4 border-t border-gray-200 text-sm text-gray-600">
+        <div class="mt-8 pt-4 border-t border-gray-200 text-gray-600">
             <p class="mb-2">
                 If less than 80% of all cards in the room are deciphered, <strong>everyone sings karaoke</strong>.
             </p>
@@ -227,7 +227,7 @@
             guessButton.disabled = true;
             guessButton.textContent = "Processing...";
             guessButton.style.display = 'none'; // Hide the button when processing
-            showMessage("Processing your guess...", 'info');
+            showMessage("Hmm, let's see...", 'info');
 
             // Simulate a 3-second delay for processing the guess
             setTimeout(() => {
