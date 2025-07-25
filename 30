@@ -61,8 +61,8 @@
     </div>
 
     <script>
-        const GUESS_COOLDOWN_SECONDS = 60;
-        // Define the acronyms and their meanings, now supporting multiple correct guesses
+        let GUESS_COOLDOWN_SECONDS = 60; // Don't use const to allow easy override via DevTools
+
         // The meanings are base64 encoded to prevent easy inspection.
         const acronyms = {
             "ffw": ['ZmxpZXMgZm9yIHdvcms=', 'Zmxvd24gZm9yIHdvcms=', 'ZmxldyBmb3Igd29yaw==', 'Zmx5IGZvciB3b3Jr'],
@@ -226,6 +226,7 @@
             // Disable button and show processing message during the fake delay
             guessButton.disabled = true;
             guessButton.textContent = "Processing...";
+            guessButton.style.display = 'none'; // Hide the button when processing
             showMessage("Processing your guess...", 'info');
 
             // Simulate a 3-second delay for processing the guess
