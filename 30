@@ -63,6 +63,7 @@
     </div>
 
     <script>
+        const GUESS_COOLDOWN_SECONDS = 2;
         // Define the acronyms and their meanings, now supporting multiple correct guesses
         // The meanings are base64 encoded to prevent easy inspection.
         const acronyms = {
@@ -143,14 +144,14 @@
         }
 
         /**
-         * Starts the 20-second cooldown timer.
+         * Starts the cooldown timer.
          */
         function startCooldown() {
             isCooldownActive = true;
             guessButton.disabled = true; // Disable button
             guessButton.style.display = 'none'; // Hide the button during cooldown
 
-            remainingCooldownTime = 20; // Cooldown reduced to 20 seconds
+            remainingCooldownTime = GUESS_COOLDOWN_SECONDS;
 
             // Display the initial result message along with the cooldown timer
             showMessage(`${lastResultMessageText}<br>Please wait ${remainingCooldownTime} seconds before guessing again.`, lastResultMessageType);
@@ -227,7 +228,7 @@
                     showMessage("Incorrect.", 'error', true); // Pass true to mark as result message
                 }
 
-                // Start the 20-second cooldown after the guess is processed
+                // Start the cooldown after the guess is processed
                 startCooldown();
 
             }, 3000); // 3-second fake delay
